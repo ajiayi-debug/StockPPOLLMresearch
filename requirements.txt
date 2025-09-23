@@ -1,0 +1,10 @@
+yfinance
+pandas
+numpy
+nltk
+requests
+feedparser
+transformers
+torch
+feedparser
+requests
