@@ -1,4 +1,3 @@
-# collect_market_data_google_news.py
 import os, json, time, ssl, certifi, logging
 from typing import Dict, List, Optional
 from urllib.parse import urlencode, quote_plus
