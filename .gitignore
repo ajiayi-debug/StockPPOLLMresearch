@@ -3,3 +3,4 @@ __pycache__/
 data/
 data_google_news/
 *.log
+finetune_paper/
