@@ -31,31 +31,31 @@ def safe_join_headlines(s: pd.Series, cap_chars: int = HEADLINE_CAP) -> str:
     text = " | ".join(map(str, s.dropna().astype(str)))
     return text[:cap_chars]
 
-def build_prompt(idx: pd.Timestamp, row: pd.Series, recent_closes: list[str]) -> str:
+def build_input(idx: pd.Timestamp, row: pd.Series, recent_closes: list[str]) -> str:
+    """Build only the input part (excluding PAPER_PROMPT_HEADER)."""
     return (
-f"""{PAPER_PROMPT_HEADER}
-TICKER: {row['ticker']}
-DATE: {idx.strftime('%Y-%m-%d')}
+        f"""TICKER: {row['ticker']}
+        DATE: {idx.strftime('%Y-%m-%d')}
 
-RECENT CLOSING PRICES (most recent last): {", ".join(recent_closes)}
+        RECENT CLOSING PRICES (most recent last): {", ".join(recent_closes)}
 
-TECHNICAL INDICATORS:
-SMA_20={row.get('SMA_20')}, SMA_50={row.get('SMA_50')},
-EMA_12={row.get('EMA_12')}, EMA_26={row.get('EMA_26')},
-RSI_14={row.get('RSI_14')}, MACD={row.get('MACD')}, MACD_signal={row.get('MACD_signal')}, MACD_hist={row.get('MACD_hist')},
-BB_width_20_2={row.get('BB_width_20_2')}
+        TECHNICAL INDICATORS:
+        SMA_20={row.get('SMA_20')}, SMA_50={row.get('SMA_50')},
+        EMA_12={row.get('EMA_12')}, EMA_26={row.get('EMA_26')},
+        RSI_14={row.get('RSI_14')}, MACD={row.get('MACD')}, MACD_signal={row.get('MACD_signal')}, MACD_hist={row.get('MACD_hist')},
+        BB_width_20_2={row.get('BB_width_20_2')}
 
-SENTIMENT AGGREGATES:
-headline_count={row.get('headline_count')}, sent_compound_mean={row.get('sent_compound_mean')}
+        SENTIMENT AGGREGATES:
+        headline_count={row.get('headline_count')}, sent_compound_mean={row.get('sent_compound_mean')}
 
-HEADLINES (concise):
-{str(row.get('titles_joined',''))}
+        HEADLINES (concise):
+        {str(row.get('titles_joined',''))}
 
-Return STRICT JSON with keys:
-- predicted_close (float, next-day close price),
-- likelihood (float in [0,1]),
-- justification (string, 1–2 sentences).
-JSON:"""
+        Return STRICT JSON with keys:
+        - predicted_close (float, next-day close price),
+        - likelihood (float in [0,1]),
+        - justification (string, 1–2 sentences).
+        JSON:"""
     )
 
 def build_response(next_close: float, likelihood: float) -> str:
@@ -125,22 +125,25 @@ def add_next_close_and_confidence(feats: pd.DataFrame, prices: pd.DataFrame):
     out["confidence_proxy"] = conf.reindex(out.index)
     return out.dropna(subset=["next_close", "confidence_proxy"])
 
-def to_jsonl(df: pd.DataFrame, all_prices: pd.DataFrame, out_path: Path, context_days: int = 5):
-    """Write paper-style prompt/response jsonl."""
+def to_jsonl(df: pd.DataFrame, all_prices: dict, out_path: Path, context_days: int = 5):
+    """Write Alpaca-style jsonl with instruction/input/output."""
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as w:
-        # build recent close context per (ticker, date)
-        # We'll pass the *same ticker’s* recent closes only.
         for idx, row in df.iterrows():
             tkr = row["ticker"]
-            # slice prices for this ticker from all_prices map
             px = all_prices[tkr]
-            # collect last N closes up to idx (inclusive)
             hist = px.loc[px.index <= idx]["Close"].tail(context_days).round(4).tolist()
             recent = [f"{v:.4f}" for v in hist]
-            prompt = build_prompt(idx, row, recent)
-            response = build_response(row["next_close"], row["confidence_proxy"])
-            w.write(json.dumps({"prompt": prompt, "response": response}, ensure_ascii=False) + "\n")
+            
+            instruction = PAPER_PROMPT_HEADER.strip()
+            input_text  = build_input(idx, row, recent)
+            output_text = build_response(row["next_close"], row["confidence_proxy"])
+            
+            w.write(json.dumps({
+                "instruction": instruction,
+                "input": input_text,
+                "output": output_text
+            }, ensure_ascii=False) + "\n")
 
 def main():
     ap = argparse.ArgumentParser()
