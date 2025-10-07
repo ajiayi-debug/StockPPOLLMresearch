@@ -8,3 +8,6 @@ transformers
 torch
 feedparser
 requests
+xgboost
+scikit-learn
+matplotlib
