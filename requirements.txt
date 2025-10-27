@@ -11,3 +11,8 @@ requests
 xgboost
 scikit-learn
 matplotlib
+accelerate
+peft
+safetensors
+huggingface_hub
+openai
