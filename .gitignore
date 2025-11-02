@@ -7,3 +7,4 @@ finetune_paper/
 .env
 results/
 finetune_ablations/batch_inputs/
+rnn_lstm_data/

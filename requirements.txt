@@ -16,3 +16,5 @@ peft
 safetensors
 huggingface_hub
 openai
+tensorflow
+tqdm
