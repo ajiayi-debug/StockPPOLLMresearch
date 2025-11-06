@@ -9,6 +9,8 @@ Run `pip install -r requirements.txt`
 
 Run `python data_collection/market_with_vader.py`
 
-## How to split data into train, test, val
+## How to split data into train, test, val for LLM distillation
 
 Run `python data_collection/prep_finetune_data.py`
+
+
