@@ -1,10 +1,11 @@
 venv
 __pycache__/
-data/
-data_google_news/
+.DS_Store
+# data/
+# data_google_news/
 *.log
-finetune_paper/
+# finetune_paper/
 .env
-results/
-finetune_ablations/batch_inputs/
-rnn_lstm_data/
+# results/
+# finetune_ablations/batch_inputs/
+# rnn_lstm_data/

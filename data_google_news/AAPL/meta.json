@@ -1,0 +1,14 @@
+{
+  "label": "Apple",
+  "yahoo_ticker": "AAPL",
+  "google_query": "\"Apple Inc\" OR AAPL OR \"Apple stock\"",
+  "start": "2015-01-01",
+  "end": "2024-12-31",
+  "generated_at_utc": "2025-09-23T07:39:56.159651+00:00",
+  "records_count": {
+    "prices": 2515,
+    "indicators": 2515,
+    "headlines": 5587,
+    "sentiment_days": 2097
+  }
+}

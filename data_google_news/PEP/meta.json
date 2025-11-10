@@ -1,0 +1,14 @@
+{
+  "label": "Pepsi",
+  "yahoo_ticker": "PEP",
+  "google_query": "\"PepsiCo\" OR Pepsi OR PEP OR \"Pepsi stock\"",
+  "start": "2015-01-01",
+  "end": "2024-12-31",
+  "generated_at_utc": "2025-09-23T07:43:40.950227+00:00",
+  "records_count": {
+    "prices": 2515,
+    "indicators": 2515,
+    "headlines": 11952,
+    "sentiment_days": 2423
+  }
+}

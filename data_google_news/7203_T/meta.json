@@ -1,0 +1,14 @@
+{
+  "label": "Toyota",
+  "yahoo_ticker": "7203.T",
+  "google_query": "\"Toyota Motor\" OR Toyota OR \"7203.T\" OR \"Toyota stock\"",
+  "start": "2015-01-01",
+  "end": "2024-12-31",
+  "generated_at_utc": "2025-09-23T07:47:17.138453+00:00",
+  "records_count": {
+    "prices": 2466,
+    "indicators": 2466,
+    "headlines": 12000,
+    "sentiment_days": 2339
+  }
+}

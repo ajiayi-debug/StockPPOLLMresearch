@@ -1,0 +1,14 @@
+{
+  "label": "HSBC",
+  "yahoo_ticker": "HSBC",
+  "google_query": "\"HSBC Holdings\" OR HSBC OR \"HSBC stock\"",
+  "start": "2015-01-01",
+  "end": "2024-12-31",
+  "generated_at_utc": "2025-09-23T07:41:41.444705+00:00",
+  "records_count": {
+    "prices": 2515,
+    "indicators": 2515,
+    "headlines": 9263,
+    "sentiment_days": 2317
+  }
+}
