@@ -5,6 +5,8 @@ This project investigates methods to improve stock price prediction accuracy by 
 
 We analyze how justification distillation and Socratic CoT enhance the student model's reasoning and prediction performance. Additionally, we examine PPO-based methods to further refine the base LLM's predictions, identifying challenges and limitations in PPO training for financial forecasting. Our results demonstrate that justification-based distillation yields the best performance improvements, while PPO refinements show mixed outcomes due to stability and reward design issues.  
 
+**[Paper Link](https://drive.google.com/file/d/1wEuF7tp2mzlfIwFYYEyLQYx2wnp84XPJ/view?usp=sharing)**
+
 ## Project Structure  
 
 ```
