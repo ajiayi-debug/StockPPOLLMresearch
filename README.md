@@ -20,7 +20,7 @@ StockPPOLLMresearch/
 │   ├── test.jsonl
 │   ├── *_instruction_format.jsonl
 │   ├── *_with_justifications.jsonl
-│   └── *_with_socratic_cot.jsonl
+│   └── *_with_qa.jsonl
 ├── model/                    # Training and inference notebooks and scripts
 │   ├── rnn_lstm_models.ipynb           # Baseline time-series models
 │   ├── llm_inference.ipynb             # Standard LLM inference
