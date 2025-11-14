@@ -58,11 +58,39 @@ StockPPOLLMresearch/
 └── requirements.txt                    # Python package dependencies
 ```
 
+## Quick Start
+
+**For users who want to use pre-trained models and pre executed data (Recommended):**
+
+1. **Setup**: Install dependencies and configure API keys (see [Setup](#setup) section)
+2. **Run Base LLM Inference**: Execute `model/llm_inference.ipynb` with HuggingFace endpoint
+3. **Run Student Model Inference**: Execute `model/llm_justification.ipynb` or `model/llm_cot.ipynb` with pre-trained models
+4. **Run Time Series Models**: Execute `model/rnn_lstm_models.ipynb` to run inference 
+5. **Evaluate Results**: Run `model/llm_results.ipynb` to compare all time series models
+
+**For researchers who want to train from scratch:**
+
+1. **Setup**: Install dependencies and configure API keys
+2. **Collect Data**: Run data collection scripts (Steps 1-3 in [Data Collection](#data-collection))
+3. **Teacher Inference**: Execute `finetune_ablations/batch_processing_clean.ipynb` to generate teacher outputs
+4. **Student Distillation**: Upload data to Google Drive and run `DSA4213_finalproj_finetuning.ipynb` in Colab
+5. **Baseline Models**: Run `model/rnn_lstm_models.ipynb` for traditional baselines
+6. **LLM Inference**: Execute inference notebooks for base LLM and distilled students `model/llm_cot.ipynb`, `model/llm_justification.ipynb`, `model/llm_inference.ipynb`
+7. **PPO Training**: Train and run PPO refinements `model/llm_ppo_training.ipynb`,`model/llm_ppo_training_chen.ipynb`,`model/llm_ppo_inference_training.ipynb`,`model/llm_ppo_inference_chen.ipynb`
+8. **Evaluation**: Run `model/llm_results.ipynb` to compare all approaches
+
+**Expected Runtime:**
+- Data collection:  1 hr or less
+- Teacher inference (batch): 1-2 hours
+- Student distillation (Colab with GPU): 4-6 hours
+- Inference per model: 4-6 hours
+- PPO training: 1 hour or less
+
 ## Setup  
 
 ### Prerequisites  
-- Python 3.8 or higher  
-- CUDA-capable GPU recommended for training  
+- Python 3.11 or higher  
+- CUDA-capable GPU recommended for training (google colab)
 - Hugging Face account with access tokens  
 
 ### Installation  
@@ -85,62 +113,147 @@ pip install -r requirements.txt
 ```  
 
 4. Configure environment variables:  
-Create a `.env` file with your API keys:  
+Create a `.env` file in the project root with your API keys:  
 ```bash
 HUGGINGFACE_TOKEN=your_token_here
-OPENAI_API_KEY=your_key_here  # Optional, for teacher model output generation
-```  
+OPENAI_API_KEY=your_key_here  # Required only for teacher model generation
+```
+
+**To obtain API keys:**
+- **HuggingFace Token**: Go to [HuggingFace Settings](https://huggingface.co/settings/tokens) → Create new token with read/write access
+- **OpenAI API Key**: Go to [OpenAI Platform](https://platform.openai.com/api-keys) → Create new secret key
+
+5. **How to run Jupyter Notebooks:**
+
+All model training and inference is done through Jupyter notebooks. To run them:
+
+```bash
+# Start Jupyter in your terminal
+jupyter notebook
+
+# Or use VS Code:
+# 1. Open the .ipynb file in VS Code
+# 2. Select Python kernel from your venv
+# 3. Click "Run All" or execute cells individually
+```
 
 ## Data Collection  
 
+**Note:** You can skip data collection if you want to use our existing datasets in `finetune_paper/` and `rnn_lstm_data/`.
+
 ### Step 1: Collect Market and News Data with Sentiment  
-Run:  
 ```bash
 python data_collection/market_with_vader.py
-```  
-This script downloads historical stock prices and scrapes news articles, performing sentiment analysis with VADER. Data is saved under `data_google_news/` organized by ticker symbol.  
+```
+
+**What this does:**
+- Downloads historical stock prices from Yahoo Finance (2015-2024)
+- Scrapes news articles for each ticker from Google News
+- Performs VADER sentiment analysis on headlines
+- Saves data under `data_google_news/` organized by ticker symbol
+
+**To customize:** Edit the ticker list in `market_with_vader.py` (default: AAPL, HSBC, PEP, 0700.HK, 7203.T)
+
+**Expected output:** `data_google_news/[TICKER]/` folders with CSV files containing prices, news, and sentiment
 
 ### Step 2: Prepare Train-Test-Val Datasets  
-Run:  
 ```bash
 python data_collection/prep_finetune_data.py
-```  
-This prepares train, validation, and test splits with multiple prompt formats, including instruction, justification, and Socratic CoT styles.  
+```
+
+**What this does:**
+- Splits data into train (2015-2021), validation (2022), test (2023-2024)
+- Creates multiple prompt formats: instruction, justification, and Socratic CoT styles
+- Generates JSONL files for fine-tuning
+
+**Expected output:** Files in `finetune_paper/` directory (train*.jsonl, val*.jsonl, test*.jsonl)
 
 ### Step 3: Prepare Data for Traditional Models  
-Run:  
 ```bash
 python data_collection/prep_rnn_lstm_data.py
-```  
-This formats data suitable for RNN and LSTM baseline models.  
+```
+
+**What this does:** Formats data with sliding windows for RNN/LSTM time-series models
+
+**Expected output:** `rnn_lstm_data/train_rnn.csv`, `rnn_lstm_data/val_rnn.csv`, `rnn_lstm_data/test_rnn.csv`  
 
 ## Model Training Pipeline  
 
 ### 1. Finetuning Pipeline
 #### Teacher Model Inference (GPT 4o mini)
 
-The teacher model inference sends batches of data to ChatGPT using the OpenAI API. This process is implemented in the `finetune_ablations/batch_processing_clean.ipynb` notebook. The notebook handles:
-- Preparing data batches for API submission
-- Sending requests to the ChatGPT API (GPT 4o mini)
-- Processing and storing the teacher model's predictions
+**Notebook:** `finetune_ablations/batch_processing_clean.ipynb`
 
-Run this notebook to generate teacher model outputs, which will then be used for distillation.
+**Requirements:**
+- OpenAI API key configured in `.env`
+- Prepared datasets from Step 2 (data collection)
 
-#### Student Model Distillation (llama 3.1 8B instruct)
+**Steps:**
+1. Open `finetune_ablations/batch_processing_clean.ipynb` in Jupyter
+2. Configure batch size and input data paths
+3. Run all cells to submit batches to ChatGPT API (GPT-4o Mini)
+4. Wait for batch processing to complete (typically 1-2 hours)
+5. Teacher outputs will be saved for distillation
 
-To perform distillation of the teacher model's outputs onto the student models, follow the instructions in the `DSA4213_finalproj_finetuning.ipynb` notebook, including inserting the teacher model's outputs into your google drive connected to the notebook. This notebook is designed to run in a Google Colab environment for easy access to GPU resources and API integration.
+**What this generates:** Justification and Q&A responses from the teacher model for training the student
 
-### 2. Baseline: RNN & LSTM Models  
-Implemented in `model/rnn_lstm_models.ipynb`, these models use historical price sequences to predict future stock prices.  
+#### Student Model Distillation (Llama 3.1 8B Instruct)
 
-### 3. Baseline: LLM Inference (Llama 3.1 8B instruct)
+**Notebook:** `DSA4213_finalproj_finetuning.ipynb` (runs in Google Colab)
 
-To run inference with the base LLM model:
+**Requirements:**
+- Google account with Google Drive
+- Colab Pro recommended (for better GPU access)
+- Teacher model outputs from previous step
 
-1. Go to Llama 3.1 8B model on Hugging Face (make sure you get the license first)
-2. Enable the inference endpoint and obtain the endpoint URL
-3. Paste the endpoint URL into the `HUGGINGFACE_INFERENCE_ENDPOINT` variable in `model/llm_inference.ipynb` (replace my endpoint) (dont worry about my endpoint it has already been disabled)
-4. Run the notebook to generate predictions
+**Steps:**
+1. Upload teacher outputs to your Google Drive in folders:
+   - `/llama_justification/` for justification distillation
+   - `/llama_cot/` for Socratic CoT distillation
+2. Open `DSA4213_finalproj_finetuning.ipynb` in [Google Colab](https://colab.research.google.com/)
+3. Mount your Google Drive when prompted
+4. Configure the fine-tuning type in the notebook:
+   - Uncomment lines for justification OR CoT (not both simultaneously)
+5. Insert your HuggingFace token in the secrets section
+6. Run all cells (training takes 4-6 hours with Colab GPU)
+7. The fine-tuned model will be automatically uploaded to your HuggingFace account
+
+**Output:** Fine-tuned student models uploaded to HuggingFace (e.g., `[your-username]/llama-3.1-8b-merged-unsloth-justification`)
+
+### 2. Baseline: RNN & LSTM Models
+
+**Notebook:** `model/rnn_lstm_models.ipynb`
+
+**Steps:**
+1. Open the notebook in Jupyter
+2. Ensure `rnn_lstm_data/` contains the prepared CSV files
+3. Run all cells to:
+   - Load and preprocess time-series data
+   - Train RNN and LSTM models with hyperparameter tuning
+   - Save best models to `results/best_rnn_model.h5` and `results/best_lstm_model.h5`
+   - Generate predictions and save to `results/rnn_lstm_predictions.csv`
+
+**Runtime:** ~30-45 minutes with GPU  
+
+### 3. Baseline: LLM Inference (Llama 3.1 8B Instruct)
+
+**Notebook:** `model/llm_inference.ipynb`
+
+**Steps:**
+1. Request access to [Llama 3.1 8B Instruct](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct) on HuggingFace (accept Meta's license)
+2. Go to the model page → Deploy → Inference Endpoints
+3. Create a new endpoint:
+   - Select GPU instance (recommended: 1x NVIDIA A10G or better)
+   - Wait for endpoint to initialize (~5 minutes)
+4. Copy the endpoint URL
+5. Open `model/llm_inference.ipynb`
+6. Replace the `HUGGINGFACE_INFERENCE_ENDPOINT` variable with your endpoint URL
+7. Run all cells to generate predictions
+8. Predictions saved to `results/llm_predictions_checkpoint.json`
+
+**Cost Note:** HuggingFace inference endpoints are billed by the hour. Remember to pause/delete when not in use.
+
+**Runtime:** ~15-30 minutes for inference
 
 ### 4. Student Model Inference (Fine-tuned via Distillation)
 
@@ -155,30 +268,67 @@ For our notebooks, we utilised huggingface inference endpoints (and the model ca
 
 **To use the pre-trained models:**
 
-1. Go to the respective model on Hugging Face using the links above
-2. Enable the inference endpoint and obtain the endpoint URL
-3. Paste the endpoint URL into the respective inference notebook (replace my endpoints):
-   - For justification distillation: `model/llm_justification_distill.ipynb`
-   - For Socratic CoT: `model/llm_socratic_cot.ipynb`
-4. Run the notebook to generate predictions
+1. Go to the respective model on HuggingFace:
+   - [Justification model](https://huggingface.co/ajiayi/llama-3.1-8b-merged-unsloth-justification)
+   - [Socratic CoT model](https://huggingface.co/ajiayi/llama-3.1-8b-merged-unsloth-cot)
+2. Click "Deploy" → "Inference Endpoints" → Create endpoint (same process as base LLM)
+3. Copy your endpoint URL once it's ready
+4. Open the respective notebook and replace the endpoint URL:
+   - For justification: `model/llm_justification.ipynb` 
+   - For Socratic CoT: `model/llm_cot.ipynb`
+5. Run all cells to generate predictions
+6. Results saved to:
+   - `results/llm_predictions_justification_checkpoint.json`
+   - `results/llm_predictions_cot_checkpoint.json`
+
+**Runtime:** ~15-30 minutes per model
 
 **To fine-tune your own student models:**
 
-If you prefer to fine-tune your own models rather than using the pre-trained ones, follow the instructions in the `DSA4213_finalproj_finetuning.ipynb` notebook. If you don't want to spend the resources on fine-tuning then just use the already finetuned models.
+Follow the [Student Model Distillation](#student-model-distillation-llama-31-8b-instruct) section above. Use pre-trained models if you want to save time and computational resources.
 
 
 ### 5. PPO Refinement  
 
 We explore two PPO variants to further refine the base LLM inference model's predictions through reinforcement learning:
 
-#### PPO Training (PLEASE ENSURE THE BASE LLM HAS ALREADY DONE INFERENCE)
-- **Multiplicative PPO** (`model/llm_ppo_training.ipynb`): Trains a policy to adjust predictions by percentage changes with reward bonuses for prediction improvement.  
-- **Chen's Additive PPO** (`model/llm_ppo_training_chen.ipynb`): Trains a policy that uses absolute price adjustments scaled by predicted price magnitude, incorporating CVaR risk penalties. This approach is inspired by the methodology proposed in [Chen (2025)](https://doi.org/10.4236/jcc.2025.134008), which integrates LLM-based stock price prediction with risk-aware PPO adjustments using CVaR metrics for more robust financial forecasting.
+#### PPO Training
+
+**Prerequisites:** Base LLM inference MUST be completed first (Step 3 above)
+
+**Training Notebooks:**
+- **Multiplicative PPO**: `model/llm_ppo_training.ipynb`
+  - Adjusts predictions by percentage changes
+  - Reward function: bonuses for prediction improvement
+- **Chen's Additive PPO**: `model/llm_ppo_training_chen.ipynb`  
+  - Uses absolute price adjustments scaled by magnitude
+  - Incorporates CVaR risk penalties
+  - Based on [Chen (2025)](https://doi.org/10.4236/jcc.2025.134008) methodology
+
+**Steps:**
+1. Choose which PPO variant to train (multiplicative or Chen's) (or train both for comparison)
+2. Open the respective notebook
+3. Verify that base LLM predictions exist in `results/`
+4. Run all cells to train the PPO agent (2-3 hours)
+5. Trained policy saved to `results/ppo_*_policy/`
+
+**Runtime:** ~2-3 hours per variant
 
 #### PPO Inference
-After training PPO policies, run inference with:
-- `model/llm_ppo_inference.ipynb` (multiplicative PPO adjustments)  
-- `model/llm_ppo_inference_chen.ipynb` (Chen's additive PPO adjustments)
+
+**Notebooks:**
+- `model/llm_ppo_inference.ipynb` (multiplicative PPO)
+- `model/llm_ppo_inference_chen.ipynb` (Chen's additive PPO)
+
+**Steps:**
+1. Ensure PPO training is complete and policy is saved
+2. Open the corresponding inference notebook
+3. Run all cells to apply PPO adjustments to base LLM predictions
+4. Results saved to:
+   - `results/test_predictions_with_ppo.csv`
+   - `results/test_predictions_with_ppo_chen.csv`
+
+**Runtime:** ~15-20 minutes per variant
 
 **Important:** PPO adjustments are applied only to the base LLM inference model (`llm_inference.ipynb`), not on top of the fine-tuned justification or Socratic CoT student models. The PPO baseline is included solely for comparison and is not combined with distillation methods.
 
@@ -186,12 +336,34 @@ PPO training revealed challenges including reward design complexity and training
 
 ## Evaluation  
 
-Evaluation is conducted in `model/llm_results.ipynb`, comparing all models using:  
+**Notebook:** `model/llm_results.ipynb`
 
+**Prerequisites:** Run all models you want to compare (at minimum: RNN/LSTM, base LLM, and one student model)
+
+**Steps:**
+1. Open `model/llm_results.ipynb`
+2. Verify that prediction files exist in `results/` directory:
+   - `rnn_lstm_predictions.csv`
+   - `llm_predictions_checkpoint.json`
+   - `llm_predictions_justification_checkpoint.json`
+   - `llm_predictions_cot_checkpoint.json` 
+   - `test_predictions_with_ppo.csv` 
+   - `test_predictions_with_ppo_chen.csv` 
+3. Run all cells to generate comprehensive evaluation
+4. Review generated visualizations and metrics
+
+**Evaluation Metrics:**
 - **Accuracy Metrics**: MAE, MAPE, RMSE, R²  
 - **Forecasting Quality**: SMAPE, NRMSE, MDA, Mean Bias Error  
 - **Risk Assessment**: CVaR and performance stratified by volatility regimes  
-- **Visualizations**: Radar charts, per-stock plots, volatility regime analyses  
+- **Visualizations**: Radar charts, per-stock plots, volatility regime analyses
+
+**Outputs:**
+- Comparison tables printed in notebook
+- Visualization plots saved to `results/`
+- Summary statistics for each model
+
+**Runtime:** ~5-10 minutes  
 
 ## Results  
 
@@ -214,4 +386,52 @@ Outputs and metrics are saved in the `results/` directory, including prediction 
 
 5. **Traditional Models Underperform**: RNN and LSTM baselines provide lower accuracy, highlighting the advantage of LLM-based reasoning approaches.  
 
-## License
+## Troubleshooting
+
+### Common Issues
+
+**1. "ModuleNotFoundError" or import errors**
+```bash
+# Solution: Reinstall dependencies
+pip install -r requirements.txt --force-reinstall
+```
+
+**2. "Inference endpoint unavailable" or 503 errors**
+- Check that your HuggingFace endpoint is running (not paused)
+- Verify endpoint URL is correct (no trailing slashes)
+- Ensure your HF token has correct permissions
+- Wait 5-10 minutes for endpoint to fully initialize
+
+**3. "CUDA out of memory" errors**
+- Reduce batch size in training notebooks
+- Use smaller model variants
+- For Colab: Upgrade to Colab Pro for better GPU
+
+**4. "OpenAI API rate limit exceeded"**
+- The batch processing notebook handles rate limits automatically
+- If issues persist, increase wait time between batches
+- Consider upgrading your OpenAI API tier
+
+**5. Data collection fails or returns empty results**
+- Check your internet connection
+- Verify ticker symbols are correct
+- Some news sources may be temporarily unavailable - script will continue with available data
+
+**6. Google Colab disconnects during training**
+- Enable "Stay Awake" browser extension
+- Use Colab Pro for longer session times
+- Notebook saves checkpoints - you can resume from last checkpoint
+
+**7. "Authentication failed" for HuggingFace**
+```bash
+# Login to HuggingFace CLI
+huggingface-cli login
+# Then paste your token
+```
+
+**8. Notebook kernel crashes**
+- Restart kernel and run cells again
+- Check if you have enough RAM (16GB+ recommended)
+- Close other applications to free up memory
+
+
