@@ -182,16 +182,3 @@ Evaluation is conducted in `model/llm_results.ipynb`, comparing all models using
 
 Outputs and metrics are saved in the `results/` directory, including prediction CSVs and evaluation plots.  
 
-## Key Findings  
-
-1. **Justification Distillation is Most Effective**: Teaching the student model to generate justifications leads to superior prediction accuracy and interpretability.  
-
-2. **Socratic Chain-of-Thought Enhances Reasoning**: Socratic prompting improves the quality of reasoning traces, aiding model transparency.  
-
-3. **PPO Refinement Faces Challenges**: PPO training for stock prediction is sensitive to reward design and model stability, limiting consistent improvements.  
-
-4. **Teacher-Student Alignment Matters**: Using Llama-3.1 8B Instruct as a teacher and Qwen2.5-0.5B as a student balances model size and performance effectively.  
-
-5. **Traditional Models Underperform**: RNN and LSTM baselines provide lower accuracy, highlighting the advantage of LLM-based reasoning approaches.  
-
-## License
