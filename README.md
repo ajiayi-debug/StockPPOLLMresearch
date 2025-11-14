@@ -9,33 +9,53 @@ We analyze how justification distillation and Socratic CoT enhance the student m
 
 ```
 StockPPOLLMresearch/
-├── data_collection/          # Scripts for data scraping and preprocessing
-│   ├── market_with_vader.py  # Collect stock prices and news with sentiment analysis
-│   ├── prep_finetune_data.py # Prepare data splits and formats for fine-tuning
-│   └── prep_rnn_lstm_data.py # Format data for traditional time-series models
-├── data_google_news/         # Raw news data organized by ticker
-├── finetune_paper/           # Fine-tuning datasets with various prompt styles
-│   ├── train.jsonl
-│   ├── val.jsonl
-│   ├── test.jsonl
-│   ├── *_instruction_format.jsonl
-│   ├── *_with_justifications.jsonl
-│   └── *_with_qa.jsonl
-├── model/                    # Training and inference notebooks and scripts
-│   ├── rnn_lstm_models.ipynb           # Baseline time-series models
-│   ├── llm_inference.ipynb             # Standard LLM inference
-│   ├── llm_justification_distill.ipynb # Justification distillation fine-tuning
-│   ├── llm_socratic_cot.ipynb          # Socratic Chain-of-Thought prompting
-│   ├── llm_ppo_training.ipynb          # PPO training with multiplicative adjustments
-│   ├── llm_ppo_training_chen.ipynb     # Chen's additive PPO training variant
+├── DSA4213_finalproj_finetuning.ipynb  # Google Colab notebook for student model distillation
+├── data_collection/                    # Scripts for data scraping and preprocessing
+│   ├── market_with_vader.py            # Collect stock prices and news with sentiment analysis
+│   ├── prep_finetune_data.py           # Prepare data splits and formats for fine-tuning
+│   └── prep_rnn_lstm_data.py           # Format data for traditional time-series models
+├── data_google_news/                   # Raw news data organized by ticker
+│   ├── 0700_HK/                        # Tencent stock data
+│   ├── 7203_T/                         # Toyota stock data
+│   ├── AAPL/                           # Apple stock data
+│   ├── HSBC/                           # HSBC stock data
+│   └── PEP/                            # PepsiCo stock data
+├── finetune_ablations/                 # Teacher model batch processing
+│   ├── batch_inputs/                   # Input data for batch processing
+│   └── batch_processing_clean.ipynb    # ChatGPT API batch processing for teacher inference
+├── finetune_paper/                     # Fine-tuning datasets with various prompt styles
+│   ├── all_supervised_price_labels.csv # Supervised learning labels
+│   ├── train*.jsonl                    # Training datasets (various formats)
+│   ├── val*.jsonl                      # Validation datasets (various formats)
+│   └── test*.jsonl                     # Test datasets (various formats)
+├── model/                              # Training and inference notebooks
+│   ├── rnn_lstm_models.ipynb           # Baseline RNN/LSTM time-series models
+│   ├── llm_inference.ipynb             # Base LLM inference
+│   ├── llm_justification.ipynb         # Justification distillation student inference
+│   ├── llm_cot.ipynb                   # Socratic CoT student inference
+│   ├── llm_ppo_training.ipynb          # PPO training (multiplicative)
+│   ├── llm_ppo_training_chen.ipynb     # PPO training (Chen's additive with CVaR)
 │   ├── llm_ppo_inference.ipynb         # PPO inference (multiplicative)
 │   ├── llm_ppo_inference_chen.ipynb    # PPO inference (Chen's method)
 │   ├── llm_results.ipynb               # Comprehensive evaluation and comparisons
-│   └── merge_and_push.py               # Model merging and deployment utilities
-├── results/                  # Prediction outputs and evaluation metrics
-├── rnn_lstm_data/            # Processed datasets for RNN/LSTM models
-├── tok_patched/              # Custom tokenizer configurations and patches
-└── requirements.txt          # Python package dependencies
+│   ├── merge_and_push.py               # Model merging and HuggingFace deployment
+│   └── token_pad.py                    # Tokenizer utilities
+├── results/                            # Prediction outputs and evaluation metrics
+│   ├── best_lstm_model.h5              # Saved LSTM model
+│   ├── best_rnn_model.h5               # Saved RNN model
+│   ├── *_predictions*.csv              # Prediction results from various models
+│   └── *_training_history.csv          # Training logs
+├── rnn_lstm_data/                      # Processed datasets for RNN/LSTM models
+│   ├── train_rnn.csv
+│   ├── val_rnn.csv
+│   └── test_rnn.csv
+├── tok_patched/                        # Custom tokenizer configurations
+│   ├── chat_template.jinja
+│   ├── config.json
+│   ├── special_tokens_map.json
+│   ├── tokenizer_config.json
+│   └── tokenizer.json
+└── requirements.txt                    # Python package dependencies
 ```
 
 ## Setup  
@@ -182,3 +202,16 @@ Evaluation is conducted in `model/llm_results.ipynb`, comparing all models using
 
 Outputs and metrics are saved in the `results/` directory, including prediction CSVs and evaluation plots.  
 
+## Key Findings  
+
+1. **Justification Distillation is Most Effective**: Teaching the student model to generate justifications leads to superior prediction accuracy and interpretability.  
+
+2. **Socratic Chain-of-Thought Enhances Reasoning**: Socratic prompting improves the quality of reasoning traces, aiding model transparency.  
+
+3. **PPO Refinement Faces Challenges**: PPO training for stock prediction is sensitive to reward design and model stability, limiting consistent improvements.  
+
+4. **Teacher-Student Alignment Matters**: Using Llama-3.1 8B Instruct as a teacher and Qwen2.5-0.5B as a student balances model size and performance effectively.  
+
+5. **Traditional Models Underperform**: RNN and LSTM baselines provide lower accuracy, highlighting the advantage of LLM-based reasoning approaches.  
+
+## License
