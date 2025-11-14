@@ -1,6 +1,7 @@
-# StockPPOLLMresearch
-Repo for Project for DSA4213 NLP based on stock trading using PPO and a finetuned LLM for downstream financial news understanding task
+# Teaching Small Models to Reason for Stock Price Accuracy:
+## Comparative Insights across Time-Series, PPO, and Distillation
 
+This project explores differing NLP models in a bid to improve stock price prediction. Methods include Distillation and Risk-aware Proximity Policy Optimisation of LLM predictions.
 ## Set up
 
 Run `pip install -r requirements.txt`
@@ -9,7 +10,7 @@ Run `pip install -r requirements.txt`
 
 Run `python data_collection/market_with_vader.py`
 
-## How to split data into train, test, val for LLM distillation
+## How to split data into train, test, val 
 
 Run `python data_collection/prep_finetune_data.py`
 
